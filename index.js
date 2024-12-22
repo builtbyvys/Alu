@@ -1,66 +1,51 @@
+import "./middleware/catchErrors.js";
+import dotenv from "dotenv-flow";
 import { uvPath } from "@titaniumnetwork-dev/ultraviolet";
 import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
 import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
-import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 import { bareModulePath } from "@mercuryworkshop/bare-as-module3";
-import { createBareServer } from "@tomphttp/bare-server-node";
+import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 import express from "express";
 import { createServer } from "http";
 import path from "node:path";
-import createRammerhead from "rammerhead/src/server/index.js";
-import compression from "compression";
-import { build } from "astro";
 import chalk from "chalk";
-import { existsSync } from "fs";
-import dotenv from "dotenv";
-import cookieParser from "cookie-parser";
-import wisp from "wisp-server-node";
-import { masqrCheck } from "./middleware/masqr.js";
-import { handler as ssrHandler } from "./dist/server/entry.mjs";
+import { server as wisp, logging as wispLogging } from "@mercuryworkshop/wisp-js/server";
+import { handler as astroSSR } from "./dist/server/entry.mjs";
+import cookies from "cookie-parser";
+import { existsSync, readFileSync } from "fs";
 
 dotenv.config();
 
-const whiteListedDomains = ["aluu.xyz", "localhost:3000"];
+const whiteListedDomains = ["aluu.xyz", "localhost"];
+
+if (existsSync("exempt_masqr.txt")) {
+  const file = readFileSync("exempt_masqr.txt", "utf-8");
+  const exemptDomains = file.split("\n");
+  exemptDomains.forEach((domain) => {
+    whiteListedDomains.push(domain.trim());
+  });
+}
+
 const LICENSE_SERVER_URL = "https://license.mercurywork.shop/validate?license=";
-const WISP_ENABLED = process.env.USE_WISP;
 const MASQR_ENABLED = process.env.MASQR_ENABLED;
+wispLogging.set_level(wispLogging.WARN);
 
-if (!existsSync("./dist")) build({});
+const log = (message) => console.log(chalk.gray.bold("[Alu] " + message));
+const success = (message) => console.log(chalk.green.bold("[Alu] " + message));
 
-const log = (message) => console.log(chalk.gray("[Alu] " + message));
-
-const bare = createBareServer("/bare/");
-
-const PORT = process.env.PORT || 3000;
-log("Starting Rammerhead...");
-const rh = createRammerhead();
-const rammerheadScopes = [
-  "/rammerhead.js",
-  "/hammerhead.js",
-  "/transport-worker.js",
-  "/task.js",
-  "/iframe-task.js",
-  "/worker-hammerhead.js",
-  "/messaging",
-  "/sessionexists",
-  "/deletesession",
-  "/newsession",
-  "/editsession",
-  "/needpassword",
-  "/syncLocalStorage",
-  "/api/shuffleDict",
-];
-const rammerheadSession = /^\/[a-z0-9]{32}/;
+const PORT = process.env.PORT;
 const app = express();
-app.use(ssrHandler);
-app.use(compression({ threshold: 0, filter: () => true }));
-app.use(cookieParser());
+
+app.use(cookies());
 
 // Set process.env.MASQR_ENABLED to "true" to enable masqr protection.
 if (MASQR_ENABLED == "true") {
   log("Starting Masqr...");
-  app.use(await masqrCheck({ whitelist: whiteListedDomains, licenseServer: LICENSE_SERVER_URL }, "Checkfailed.html"));
+  const masqrCheck = (await import("./middleware/Masqr/index.js")).masqrCheck;
+  app.use(await masqrCheck({ whitelist: whiteListedDomains, licenseServer: LICENSE_SERVER_URL, htmlFile: "Checkfailed.html" }));
 }
+
+app.use(astroSSR);
 
 app.use(express.static(path.join(process.cwd(), "static")));
 app.use(express.static(path.join(process.cwd(), "build")));
@@ -129,50 +114,26 @@ app.get("/search", async (req, res) => {
   }
 });
 app.get("*", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "dist/client/404.html"));
+  res.redirect(302, "/404");
 });
 
 const server = createServer();
 server.on("request", (req, res) => {
-  if (bare.shouldRoute(req)) {
-    bare.routeRequest(req, res);
-  } else if (shouldRouteRh(req)) {
-    routeRhRequest(req, res);
-  } else {
-    app(req, res);
-  }
+  app(req, res);
 });
 
 server.on("upgrade", (req, socket, head) => {
-  if (bare.shouldRoute(req)) {
-    bare.routeUpgrade(req, socket, head);
-  } else if (shouldRouteRh(req)) {
-    routeRhUpgrade(req, socket, head);
-    /* Kinda hacky, I need to do a proper dynamic import. */
-  } else if (req.url.endsWith("/wisp/") && WISP_ENABLED == "true") {
+  if (req.url.endsWith("/wisp/")) {
     wisp.routeRequest(req, socket, head);
   } else {
     socket.end();
   }
 });
 
-function shouldRouteRh(req) {
-  const url = new URL(req.url, "http://0.0.0.0");
-  return rammerheadScopes.includes(url.pathname) || rammerheadSession.test(url.pathname);
-}
-
-function routeRhRequest(req, res) {
-  rh.emit("request", req, res);
-}
-
-function routeRhUpgrade(req, socket, head) {
-  rh.emit("upgrade", req, socket, head);
-}
-
 log("Starting Alu...");
-console.log(chalk.green("[Alu] Alu started successfully!"));
+success("Alu started successfully!");
 server.on("listening", () => {
-  console.log(chalk.green(`[Alu] Server running at http://localhost:${PORT}/.`));
+  success(`Server running at http://localhost:${PORT}/.`);
 });
 
 server.listen({

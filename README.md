@@ -1,39 +1,42 @@
 <p align="center">
-
   <img src="https://github.com/titaniumnetwork-dev/Alu/assets/99224452/d740378b-3fba-4470-8f06-3eefdae8a313" alt="AluLogo" width="250"/>
 </p>
 
 # Alu
 
-Alu is a beautiful, functional, and sleek web proxy, which focuses on customization and ease of use.
+Alu is a beautiful, functional, and sleek web proxy that prioritizes customization and ease of use.
 
-<img src="https://shields.io/github/languages/code-size/titaniumnetwork-dev/Alu?style=flat-square&logo=github"/> <img src="https://shields.io/github/stars/titaniumnetwork-dev/Alu?style=flat-square&logo=github"/> <img src="https://img.shields.io/badge/made%20with-coffee-452515?style=flat-square&logo=coffeescript"/>
+![Code size](https://shields.io/github/languages/code-size/titaniumnetwork-dev/Alu?style=flat-square&logo=github)
+![Star count](https://shields.io/github/stars/titaniumnetwork-dev/Alu?style=flat-square&logo=github)
+![Made with coffee](https://img.shields.io/badge/made%20with-coffee-452515?style=flat-square&logo=coffeescript)
 
 # Features
 
 - 🌐 UV and Rammerhead support
-- 🎨 Themes
+- 🎨 Multiple Themes to choose from
+- 🏬 Marketplace for Themes and Extensions
 - 🕶 Multiple site cloaking options
 - 🎮 50+ Games to choose from
-- 🌎 English and Japanese support
+- 🌎 Support for **6** Languages
 - 🚀 High performance
 - 🔍 Multiple Search Engines to pick from
 
 # Deploying Alu
 
-Deploying Alu is about as simple as it gets, from your terminal, type
+Deploying Alu is about as simple as it gets.
 
-`git clone https://github.com/titaniumnetwork-dev/Alu --recurse-submodules`
+1. Open your terminal and type `git clone https://github.com/titaniumnetwork-dev/Alu --recurse-submodules`
 
-This command should clone Alu's frontend, as well as [alu-games](https://github.com/wearrrrr/alu-games). If you wish to skip cloning games, then leave out the last flag.
+2. Install pnpm with `npm i -g pnpm`.
 
-Install pnpm with `npm i -g pnpm`.
+3. Then simply run `pnpm i` to install all node_modules, and build the frontend with `pnpm run build`; this shouldn't take more than a couple seconds.
 
-Then simply run `pnpm i` to install all node_modules, and then build the frontend with `pnpm run build`, this shouldn't take more than a couple seconds.
+4. Finally, run `pnpm start` to actually serve Alu! It defaults to port 3000 for everything, but this can be specified in an env file.
 
-Finally, run `pnpm start` to actually serve Alu! It defaults to port 3000 for everything, but this can be specified in an env file.
+Congrats! You should now be running your very own instance of Alu! 🎉
 
-Congrats, you've now deployed your very own web proxy!
+> [!WARNING]
+> Recursing all submodules will install [alu-games](https://github.com/wearrrrr/alu-games) as well. This repo contains _all_ games for Alu and is quite large! If you wish to skip it, simply remove `--recurse-submodules` from your clone command.
 
 ## What about Docker?
 

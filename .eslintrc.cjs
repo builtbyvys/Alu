@@ -15,7 +15,7 @@ module.exports = {
     "prefer-const": "error",
     "no-case-declarations": "off",
   },
-  ignorePatterns: ["env.d.ts"],
+  ignorePatterns: ["env.d.ts", "middleware/", "public/"],
   overrides: [
     {
       files: ["*.astro"],
@@ -33,6 +33,9 @@ module.exports = {
       },
       plugins: ["@typescript-eslint"],
       extends: ["plugin:@typescript-eslint/recommended"],
+      rules: {
+        "@typescript-eslint/no-explicit-any": "off",
+      },
     },
     {
       // Define the configuration for `<script>` tag.

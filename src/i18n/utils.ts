@@ -2,11 +2,14 @@ import { ui, defaultLang } from "./ui";
 
 type LanguageKeys = keyof typeof ui;
 type TranslationKeys = keyof (typeof ui)[typeof defaultLang];
+type StaticPath = { params: { lang: string } };
 
-export const STATIC_PATHS = [{ params: { lang: "en" } }, { params: { lang: "fr" } }, { params: { lang: "zh" } }, { params: { lang: "jp" } }, { params: { lang: "ru" } }];
+const STATIC_PATHS: StaticPath[] = [];
+for (const lang in ui) {
+  STATIC_PATHS.push({ params: { lang } });
+}
 
 function getLangFromUrl(url: URL) {
-  // comma lol
   const [, lang] = url.pathname.split("/");
   if (lang in ui) return lang as keyof typeof ui;
   return defaultLang;
@@ -26,3 +29,4 @@ function useTranslations(lang: LanguageKeys) {
 }
 
 export const i18n = { getLangFromUrl, useTranslations, inferLangUseTranslations };
+export { STATIC_PATHS };

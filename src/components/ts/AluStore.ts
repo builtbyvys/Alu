@@ -1,11 +1,19 @@
-const KEYSTORE: AluDefaultKeys = {
+const getWSProtocol = () => {
+  if (location.protocol === "https:") {
+    return "wss://";
+  } else {
+    return "ws://";
+  }
+};
+
+const KEYSTORE: Alu.DefaultKeys = {
   proxy: {
-    name: "Ultraviolet",
-    value: "ultraviolet",
+    name: "Auto",
+    value: "auto",
   },
   search: {
     name: "Google",
-    value: "google",
+    value: "https://google.com/search?q=",
   },
   openpage: {
     name: "Embed",
@@ -13,23 +21,18 @@ const KEYSTORE: AluDefaultKeys = {
   },
   wisp: {
     name: "Alu (US)",
-    value: "alu",
+    value: getWSProtocol() + window.location.host + "/wisp/",
   },
   bareUrl: {
-    name: `${window.location.protocol}//${window.location.host}/bare/`,
     value: `${window.location.protocol}//${window.location.host}/bare/`,
+  },
+  transport: {
+    name: "Epoxy",
+    value: "/epoxy/index.mjs",
   },
   theme: {
     name: "Alu",
     value: "alu",
-  },
-  transport: {
-    name: "Epoxy",
-    value: "epoxy",
-  },
-  searxng: {
-    name: "https://searxng.site",
-    value: "https://searxng.site",
   },
 };
 
@@ -38,27 +41,34 @@ if (localStorage.getItem("AluStore") === null) {
 }
 
 class AluStore {
-  private store: AluDefaultKeys = KEYSTORE;
+  #store: Alu.DefaultKeys;
   constructor() {
     const localstore = localStorage.getItem("AluStore");
     if (!localstore) {
       localStorage.setItem("AluStore", JSON.stringify(KEYSTORE));
     }
-    this.store = JSON.parse(localStorage.getItem("AluStore") || "{}");
+    this.#store = JSON.parse(localStorage.getItem("AluStore") || "{}");
   }
-  public getStore(): AluDefaultKeys {
-    return this.store;
+  public getStore(): Alu.DefaultKeys {
+    return this.#store;
   }
-  public get(key: string): AluKey {
-    return this.store[key];
+  public get(key: Alu.ValidStoreKeys): Alu.Key {
+    return this.#store[key];
   }
-  public set(key: string, value: AluKey): void {
-    this.store[key] = value;
+  public set(key: Alu.ValidStoreKeys, value: Alu.Key): void {
+    this.#store[key] = value;
+    this.save();
+  }
+  public reset(key: Alu.ValidStoreKeys) {
+    this.set(key, KEYSTORE[key]);
+  }
+  public remove(key: Alu.ValidStoreKeys) {
+    delete this.#store[key];
     this.save();
   }
   private save(): void {
-    localStorage.setItem("AluStore", JSON.stringify(this.store));
+    localStorage.setItem("AluStore", JSON.stringify(this.#store));
   }
 }
 
-window.AluStore = new AluStore();
+export default AluStore;

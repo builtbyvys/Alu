@@ -8,8 +8,6 @@ interface Window {
   __uv$location: Location;
   loadFormContent: () => Promise<void> | null;
   idb: IDBDatabase;
-  // Why is this not already on Window?
-  eval(string): void;
   wispData: WispData[];
 }
 
@@ -19,7 +17,11 @@ type Extension = {
   name: string;
   script: string;
   type: ExtType;
+
 };
+
+// This just makes it shorter to type
+type HTMLButton = HTMLButtonElement;
 
 /* 
   - title: The title of the extension
@@ -32,21 +34,30 @@ type Extension = {
   - type: The type of extension, see ExtType.
   - themeName: The name of the theme that goes in the data attribute
 */
-interface IExtensionMetadata {
+interface ExtensionMetadata {
   title: string;
   description: string;
   version: string;
   image: string;
   script: string;
-  pages?: string[];
-  entryNamespace?: string;
-  entryFunc?: string;
-  scriptCopy?: string;
+  scriptCopy?: Uint8Array | null;
   type: ExtType;
-  themeName?: string;
 }
 
-type ExtensionMetadataJSON = Record<string, IExtensionMetadata>;
+interface ExtServiceWorkerMetadata extends ExtensionMetadata {
+  entryNamespace: string;
+  entryFunc: string;
+}
+
+interface ExtPageMetadata extends ExtensionMetadata {
+  init: string;
+}
+
+interface ExtThemeMetadata extends ExtensionMetadata {
+  themeName: string;
+}
+
+type ExtensionMetadataJSON = Record<string, ExtensionMetadata>;
 
 type InstallReturn = {
   code: EXT_RETURN;
@@ -75,10 +86,4 @@ type WispServer = {
 type WispData = {
   server: WispServer;
   time: number;
-};
-
-type AluKey = Record<string, string>;
-
-type AluDefaultKeys = {
-  [key: string]: AluKey;
 };

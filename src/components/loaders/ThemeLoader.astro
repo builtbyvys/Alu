@@ -1,19 +1,12 @@
 <script>
   import IDBManager from "@components/ts/IDBManager";
+  import instantiateAlu from "@components/ts/Alu";
+
+  await instantiateAlu();
 
   function switchTheme() {
-    const currentTheme = localStorage.getItem("alu__selectedTheme");
-
-    if (currentTheme) {
-      document.documentElement.setAttribute("data-theme", JSON.parse(currentTheme).value.toLowerCase());
-      const footer = document.getElementById("footer");
-      if (footer) {
-        footer.dataset.theme = JSON.parse(currentTheme).value.toLowerCase();
-      }
-    } else {
-      localStorage.setItem("alu__selectedTheme", JSON.stringify({ name: "Alu", value: "alu" }));
-      switchTheme();
-    }
+    const currentTheme = Alu.store.get("theme");
+    document.documentElement.setAttribute("data-theme", currentTheme.value!);
   }
 
   switchTheme();
@@ -27,20 +20,23 @@
     store.getAll().onsuccess = (event) => {
       const result = (event.target as IDBRequest).result;
       if (result) {
-        result.forEach((extension: IExtensionMetadata) => {
+        result.forEach((extension: ExtThemeMetadata) => {
           if (extension.type === "theme" && extension.themeName) {
             // Load theme CSS
-            loadStyleFromAtob(atob(extension.scriptCopy!));
+            const decoder = new TextDecoder();
+            const style = decoder.decode(extension.scriptCopy!);
+
+            loadStyleFromString(style);
 
             document.addEventListener("astro:after-swap", () => {
-              loadStyleFromAtob(atob(extension.scriptCopy!));
+              loadStyleFromString(style);
             });
           }
         });
       }
     };
   };
-  function loadStyleFromAtob(style: string) {
+  function loadStyleFromString(style: string) {
     const styleEl = document.createElement("style");
     styleEl.textContent = style;
     document.head.appendChild(styleEl);
